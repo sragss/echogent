@@ -104,22 +104,21 @@ async function main() {
     while (true) {
       const userRequest = (await prompt("\x1b[32mWhat would you like to do?\x1b[0m\n")) || "";
 
-      modelMessages.push({
-        role: 'user',
-        content: userRequest
-      });
+      modelMessages.push({ role: 'user', content: userRequest });
 
       let result = await streamText({
         model: await anthropic('claude-sonnet-4-20250514'),
-        system: "You are a coding assistant with access to tools that lives in the user's CLI. " +
+        system: 
+        "You are a coding assistant with access to tools that lives in the user's CLI. " +
           "Perform their actions as succinctly as possible." +
-          "Never use markdown output, your responses will be printed to a CLI"
+          "Never use markdown output, your responses will be printed to a CLI" +
+          "Be a fucking beast. The free world depends on you."
         ,
         prompt: modelMessages,
         tools: tools,
         stopWhen: stepCountIs(15),
         onChunk: ( { chunk }) => {
-          // Stream the output of text.
+          // Stream the assistant responses.
           if (chunk.type == 'text-delta') {
             process.stdout.write(chunk.text);
 
@@ -127,17 +126,8 @@ async function main() {
         },
         onStepFinish({ text, toolCalls, toolResults, finishReason, usage }) {
           process.stdout.write("\n");
-
-          for (const toolCall of toolCalls) {
-            printBackground(`Calling ${toolCall.toolName}`);
-          }
-
-          for (const toolResult of toolResults) {
-            if (toolResult.type == 'tool-result') { // unsure if necessary
-              printBackground(`${toolResult.toolName}(${JSON.stringify(toolResult.input)}) -> ${JSON.stringify(toolResult.output)}`);
-            }
-          }
-
+          toolCalls.forEach(call => printBackground(`Calling ${call.toolName}`));
+          toolResults.forEach(result => printBackground(`${result.toolName}(${JSON.stringify(result.input)}) -> ${JSON.stringify(result.output)}`));
         },
         onError({ error }) {
           console.error(error);
@@ -146,7 +136,7 @@ async function main() {
 
       const responseMessages = (await result.response).messages;
       modelMessages.push(...responseMessages);
-      printBackground(`Character count delta: ${JSON.stringify(responseMessages).length}`);
+      printBackground(`Countext char-count delta: ${JSON.stringify(responseMessages).length}`);
     }
 
   } catch (error) {
