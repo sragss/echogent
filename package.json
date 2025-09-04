@@ -1,0 +1,21 @@
+{
+  "name": "echogent",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@merit-systems/echo-typescript-sdk": "^1.0.8",
+    "ai": "^5.0.30",
+    "enquirer": "^2.4.1",
+    "open": "^10.2.0"
+  },
+  "scripts": {
+    "dev": "bun src/cli.ts"
+  }
+}
