@@ -162,11 +162,15 @@ async function main() {
         prompt: modelMessages,
         tools: tools,
         stopWhen: stepCountIs(15),
-        onStepFinish({ text, toolCalls, toolResults, finishReason, usage }) {
+        onChunk: ( { chunk }) => {
+          // Stream the output of text.
+          if (chunk.type == 'text-delta') {
+            process.stdout.write(chunk.text);
 
-          if (text !== '') {
-            console.log(text);
           }
+        },
+        onStepFinish({ text, toolCalls, toolResults, finishReason, usage }) {
+          process.stdout.write("\n");
 
           for (const toolCall of toolCalls) {
             printBackground(`Calling ${toolCall.toolName}`);
