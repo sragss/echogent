@@ -138,12 +138,12 @@ async function main() {
     // TODO(sragss): 
     // - [x] Let this bitch list files and read files.
     // - [x] Let it do code search with rg.
-    // - [ ] Loop it with ModelMessages.
+    // - [x] Loop it with ModelMessages.
     // - [ ] Use anthropic to let it modify a file.
     // - [ ] Let it use bash with approval (xterm headless?).
     // - [ ] Wire it up to Anthropic search.
 
-    let modelMessages = [];
+    let modelMessages: ModelMessage[] = [];
 
     while (true) {
       const userRequest = (await prompt("\x1b[32mWhat would you like to do?\x1b[0m\n")) || "";
@@ -159,7 +159,7 @@ async function main() {
           "Perform their actions as succinctly as possible." +
           "Never use markdown output, your responses will be printed to a CLI"
         ,
-        prompt: userRequest,
+        prompt: modelMessages,
         tools: tools,
         stopWhen: stepCountIs(15),
         onStepFinish({ text, toolCalls, toolResults, finishReason, usage }) {
@@ -185,7 +185,7 @@ async function main() {
       });
 
       const responseMessages = (await result.response).messages;
-      modelMessages.push(responseMessages);
+      modelMessages.push(...responseMessages);
       printBackground(`Character count delta: ${JSON.stringify(responseMessages).length}`);
     }
 

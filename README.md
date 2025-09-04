@@ -1,15 +1,21 @@
 # echogent
 
-To install dependencies:
+AI coding assistant that runs in your CLI. Powered by Claude via Echo.
+
+## Setup
 
 ```bash
 bun install
+bun run dev
 ```
 
-To run:
+On first run, you'll get an Echo API key for billing.
 
-```bash
-bun run index.ts
-```
+## Features
 
-This project was created using `bun init` in bun v1.2.20. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+- Browse and read files
+- Search code with ripgrep
+- Interactive AI assistance
+- Automatic billing via Echo
+
+Requires [Bun](https://bun.com) and ripgrep.
