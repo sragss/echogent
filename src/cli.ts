@@ -11,7 +11,6 @@ import { z } from 'zod';
 const APP_ID = 'd4db70fb-4df9-4161-a89b-9ec53125088b';
 
 const tools = {
-  str_replace_based_edit_tool: textEditorTool,
   list_files: tool({
     description: 'List files and directories in a given directory path. Use this to explore the file structure.',
     inputSchema: z.object({
@@ -51,7 +50,8 @@ const tools = {
       }
     }
   }),
-  ripgrep: ripgrepTool
+  ripgrep: ripgrepTool,
+  text_editor_tool: textEditorTool,
 };
 
 
