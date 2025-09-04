@@ -16,6 +16,9 @@
     "open": "^10.2.0",
     "zod": "^4.1.5"
   },
+  "bin": {
+    "echogent": "./src/cli.ts"
+  },
   "scripts": {
     "dev": "bun src/cli.ts"
   }

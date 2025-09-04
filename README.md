@@ -9,7 +9,21 @@ AI coding assistant that runs in your CLI. Powered by Claude via Echo.
 
 ```bash
 bun install
+```
+
+### Run locally
+```bash
 bun run dev
+```
+
+### Install globally
+```bash
+# Make the CLI executable and link globally
+chmod +x src/cli.ts
+bun link
+
+# Now you can run from anywhere
+echogent
 ```
 
 On first run, you'll get an Echo API key for billing.

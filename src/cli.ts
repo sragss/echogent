@@ -1,3 +1,4 @@
+#!/usr/bin/env bun
 import { EchoClient, createEchoAnthropic } from '@merit-systems/echo-typescript-sdk';
 import { stepCountIs, streamText, tool, type Tool, type ModelMessage } from 'ai';
 import open from 'open';
@@ -95,7 +96,7 @@ async function main() {
     // - [x] Let this bitch list files and read files.
     // - [x] Let it do code search with rg.
     // - [x] Loop it with ModelMessages.
-    // - [ ] Use Anthropic to let it modify a file.
+    // - [x] Use Anthropic to let it modify a file.
     // - [ ] Let it use bash with approval (xterm headless?).
     // - [ ] Wire it up to Anthropic search.
 
