@@ -1,4 +1,4 @@
-# echogent
+# ECHOGENT
 
 AI coding assistant that runs in your CLI. Powered by Claude via Echo.
 
