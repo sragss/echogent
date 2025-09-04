@@ -10,10 +10,15 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@lydell/node-pty": "^1.1.0",
     "@merit-systems/echo-typescript-sdk": "^1.0.8",
+    "@xterm/headless": "^5.5.0",
     "ai": "^5.0.30",
+    "chardet": "^2.1.0",
     "enquirer": "^2.4.1",
+    "node-pty": "^1.0.0",
     "open": "^10.2.0",
+    "strip-ansi": "^7.1.0",
     "zod": "^4.1.5"
   },
   "bin": {

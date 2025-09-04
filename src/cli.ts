@@ -6,6 +6,7 @@ import { getOrCreateApiKey } from './apiKey';
 import { BANNER } from './banner';
 import { textEditorTool } from './tools/textEditorTool';
 import { ripgrepTool } from './tools/ripgrepTool';
+import { bashTool } from './tools/bashTool';
 import { z } from 'zod';
 
 
@@ -53,6 +54,7 @@ const tools = {
   }),
   ripgrep: ripgrepTool,
   text_editor_tool: textEditorTool,
+  bash_execute: bashTool,
 };
 
 
@@ -85,19 +87,13 @@ async function main() {
       await open(payment.paymentLink.url);
     }
 
-    const bashTool = anthropic.tools.bash_20241022({
-      execute: async ({ command, restart }) => {
-        // For now, return a message that bash execution is not implemented
-        return `Bash execution not implemented yet. Command: ${command}`;
-      },
-    });
 
     // TODO(sragss): 
     // - [x] Let this bitch list files and read files.
     // - [x] Let it do code search with rg.
     // - [x] Loop it with ModelMessages.
     // - [x] Use Anthropic to let it modify a file.
-    // - [ ] Let it use bash with approval (xterm headless?).
+    // - [x] Let it use bash with approval (xterm headless?).
     // - [ ] Wire it up to Anthropic search.
 
     let modelMessages: ModelMessage[] = [];
