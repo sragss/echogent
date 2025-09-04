@@ -4,6 +4,7 @@ import open from 'open';
 import { getOrCreateApiKey } from './apiKey';
 import { z } from 'zod';
 
+
 const APP_ID = 'd4db70fb-4df9-4161-a89b-9ec53125088b';
 
 async function main() {
@@ -51,6 +52,45 @@ async function main() {
             location,
             temperature: 72 + Math.floor(Math.random() * 21) - 10
           })
+        }),
+        list_files: tool({
+          description: 'List files and directories in a given directory path. Use this to explore the file structure.',
+          inputSchema: z.object({
+            path: z.string().optional().describe('The directory path to list. Defaults to current directory if not provided.')
+          }),
+          execute: async ({ path = '.' }) => {
+            try {
+              const entries = [];
+              for await (const entry of new Bun.Glob('*').scan(path)) {
+                const fullPath = `${path}/${entry}`;
+                const file = Bun.file(fullPath);
+                const isDirectory = await file.exists() && (await Bun.file(fullPath).stat()).isDirectory;
+                entries.push({
+                  name: entry,
+                  path: fullPath,
+                  type: isDirectory ? 'directory' : 'file'
+                });
+              }
+              return { path, entries };
+            } catch (error) {
+              return { error: `Failed to list directory: ${error instanceof Error ? error.message : String(error)}`, path };
+            }
+          }
+        }),
+        read_file: tool({
+          description: "Read the contents of a given relative file path. Use this when you want to see what's inside a file. Do not use this with directory names.",
+          inputSchema: z.object({
+            path: z.string().describe('The realtive path of a file in the working directory.')
+          }),
+          execute: async ({ path }) => {
+            try {
+              const file = Bun.file(path);
+              const content = await file.text();
+              return { content, path };
+            } catch (error) {
+              return { error: `Failed to read file: ${error instanceof Error ? error.message : String(error)}`, path };
+            }
+          }
         })
       };
 
@@ -58,13 +98,17 @@ async function main() {
 
     await generateText({
       model: await openai('gpt-4o'),
-      prompt: 'Explain quantum computing in simple terms and the weather in LA then tell me a story about it.',
+      prompt: 'Tell me the weather then the contents of package.json then tell me all the fiels in .claude',
       tools: tools,
-      stopWhen: stepCountIs(5),
+      stopWhen: stepCountIs(15),
       onStepFinish({ text, toolCalls, toolResults, finishReason, usage }) {
 
         if (text !== '') {
           console.log("Assistant: ", text);
+        }
+
+        for (const toolCall of toolCalls) {
+          console.log(`Calling ${toolCall.toolName}`);
         }
 
         for (const toolResult of toolResults) {
