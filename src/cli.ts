@@ -1,5 +1,5 @@
 import { EchoClient, createEchoAnthropic } from '@merit-systems/echo-typescript-sdk';
-import { generateText, readUIMessageStream, stepCountIs, streamText, tool, type Tool } from 'ai';
+import { generateText, readUIMessageStream, stepCountIs, streamText, tool, type Tool, type ModelMessage } from 'ai';
 import open from 'open';
 import { getOrCreateApiKey } from './apiKey';
 import { z } from 'zod';
@@ -70,33 +70,33 @@ const tools = {
     execute: async ({ pattern, path = '.', fileType, ignoreCase, contextLines, maxCount }) => {
       try {
         const args = ['rg'];
-        
+
         // Add flags
         if (ignoreCase) args.push('-i');
         if (contextLines) args.push('-C', contextLines.toString());
         if (maxCount) args.push('-m', maxCount.toString());
         if (fileType) args.push('-t', fileType);
-        
+
         // Add pattern and path
         args.push(pattern, path);
-        
+
         const proc = Bun.spawn(args, {
           stdout: 'pipe',
           stderr: 'pipe'
         });
-        
+
         const stdout = await new Response(proc.stdout).text();
         const stderr = await new Response(proc.stderr).text();
-        
+
         await proc.exited;
-        
+
         if (proc.exitCode !== 0 && proc.exitCode !== 1) {
           return { error: stderr || 'Ripgrep command failed', pattern, path };
         }
-        
-        return { 
-          matches: stdout.trim(), 
-          pattern, 
+
+        return {
+          matches: stdout.trim(),
+          pattern,
           path,
           matchCount: stdout.trim() ? stdout.trim().split('\n').length : 0
         };
@@ -130,72 +130,64 @@ async function main() {
       const payment = await echo.payments.createPaymentLink({
         amount: 10,
       });
-      
+
       console.log('Low balance. Opening payment link...');
       await open(payment.paymentLink.url);
     }
 
-    const userRequest = (await prompt("What would you like to do?")) || "";
-
-
     // TODO(sragss): 
     // - [x] Let this bitch list files and read files.
     // - [x] Let it do code search with rg.
-    // - [ ] Loop it.
+    // - [ ] Loop it with ModelMessages.
     // - [ ] Use anthropic to let it modify a file.
     // - [ ] Let it use bash with approval (xterm headless?).
     // - [ ] Wire it up to Anthropic search.
-    
 
+    let modelMessages = [];
 
-    let result = await streamText({
-      model: await anthropic('claude-sonnet-4-20250514'),
-      system: "You are a coding assistant with access to tools that lives in the user's CLI. " +
-        "Perform their actions as succinctly as possible." +
-        "Never use markdown output, your responses will be printed to a CLI"
+    while (true) {
+      const userRequest = (await prompt("\x1b[32mWhat would you like to do?\x1b[0m\n")) || "";
+
+      modelMessages.push({
+        role: 'user',
+        content: userRequest
+      });
+
+      let result = await streamText({
+        model: await anthropic('claude-sonnet-4-20250514'),
+        system: "You are a coding assistant with access to tools that lives in the user's CLI. " +
+          "Perform their actions as succinctly as possible." +
+          "Never use markdown output, your responses will be printed to a CLI"
         ,
-      prompt: userRequest,
-      tools: tools,
-      stopWhen: stepCountIs(15),
-      onStepFinish({ text, toolCalls, toolResults, finishReason, usage }) {
+        prompt: userRequest,
+        tools: tools,
+        stopWhen: stepCountIs(15),
+        onStepFinish({ text, toolCalls, toolResults, finishReason, usage }) {
 
-        if (text !== '') {
-          console.log(text);
-        }
-
-        for (const toolCall of toolCalls) {
-          printBackground(`Calling ${toolCall.toolName}`);
-        }
-
-        for (const toolResult of toolResults) {
-          if (toolResult.type == 'tool-result') { // unsure if necessary
-            printBackground(`${toolResult.toolName}(${JSON.stringify(toolResult.input)}) -> ${JSON.stringify(toolResult.output)}`);
+          if (text !== '') {
+            console.log(text);
           }
+
+          for (const toolCall of toolCalls) {
+            printBackground(`Calling ${toolCall.toolName}`);
+          }
+
+          for (const toolResult of toolResults) {
+            if (toolResult.type == 'tool-result') { // unsure if necessary
+              printBackground(`${toolResult.toolName}(${JSON.stringify(toolResult.input)}) -> ${JSON.stringify(toolResult.output)}`);
+            }
+          }
+
+        },
+        onError({ error }) {
+          console.error(error);
         }
+      });
 
-      }
-    });
-
-
-    // for await (const uiMessage of readUIMessageStream({
-    //   stream: result.toUIMessageStream(),
-    // })) {
-    //   // Handle different part types
-    //   uiMessage.parts.forEach(part => {
-    //     switch (part.type) {
-    //       case 'text':
-    //         console.log('Text:', part.text);
-    //         break;
-    //       // case 'tool-call':
-    //       //   console.log('Tool called:', part.toolName, 'with args:', part.args);
-    //       //   break;
-    //       // case 'tool-result':
-    //       //   console.log('Tool result:', part.result);
-    //       //   break;
-    //     }
-    //   });
-    // }
-
+      const responseMessages = (await result.response).messages;
+      modelMessages.push(responseMessages);
+      printBackground(`Character count delta: ${JSON.stringify(responseMessages).length}`);
+    }
 
   } catch (error) {
     console.error('Error:', error);
