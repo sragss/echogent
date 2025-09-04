@@ -1,4 +1,4 @@
-import { EchoClient, createEchoOpenAI } from '@merit-systems/echo-typescript-sdk';
+import { EchoClient, createEchoOpenAI, createEchoAnthropic } from '@merit-systems/echo-typescript-sdk';
 import { generateText, readUIMessageStream, stepCountIs, streamText, tool, type Tool } from 'ai';
 import open from 'open';
 import { getOrCreateApiKey } from './apiKey';
@@ -15,7 +15,7 @@ async function main() {
     const echo = new EchoClient({ apiKey });
 
     // Create OpenAI provider with Echo billing
-    const openai = createEchoOpenAI(
+    const anthropic = createEchoAnthropic(
       { appId: APP_ID },
       async () => apiKey as string
     );
@@ -91,14 +91,63 @@ async function main() {
               return { error: `Failed to read file: ${error instanceof Error ? error.message : String(error)}`, path };
             }
           }
+        }),
+        ripgrep: tool({
+          description: 'Search for patterns in files using ripgrep. Use this to find code, text, or patterns across files.',
+          inputSchema: z.object({
+            pattern: z.string().describe('The pattern to search for (supports regex)'),
+            path: z.string().optional().describe('The directory or file path to search in. Defaults to current directory.'),
+            fileType: z.string().optional().describe('File type filter (e.g., "js", "ts", "py", "md")'),
+            ignoreCase: z.boolean().optional().describe('Ignore case when searching'),
+            contextLines: z.number().optional().describe('Number of context lines to show around matches'),
+            maxCount: z.number().optional().describe('Maximum number of matches to return')
+          }),
+          execute: async ({ pattern, path = '.', fileType, ignoreCase, contextLines, maxCount }) => {
+            try {
+              const args = ['rg'];
+              
+              // Add flags
+              if (ignoreCase) args.push('-i');
+              if (contextLines) args.push('-C', contextLines.toString());
+              if (maxCount) args.push('-m', maxCount.toString());
+              if (fileType) args.push('-t', fileType);
+              
+              // Add pattern and path
+              args.push(pattern, path);
+              
+              const proc = Bun.spawn(args, {
+                stdout: 'pipe',
+                stderr: 'pipe'
+              });
+              
+              const stdout = await new Response(proc.stdout).text();
+              const stderr = await new Response(proc.stderr).text();
+              
+              await proc.exited;
+              
+              if (proc.exitCode !== 0 && proc.exitCode !== 1) {
+                return { error: stderr || 'Ripgrep command failed', pattern, path };
+              }
+              
+              return { 
+                matches: stdout.trim(), 
+                pattern, 
+                path,
+                matchCount: stdout.trim() ? stdout.trim().split('\n').length : 0
+              };
+            } catch (error) {
+              return { error: `Failed to run ripgrep: ${error instanceof Error ? error.message : String(error)}`, pattern, path };
+            }
+          }
         })
       };
 
 
 
     await generateText({
-      model: await openai('gpt-4o'),
-      prompt: 'Tell me the weather then the contents of package.json then tell me all the fiels in .claude',
+      model: await anthropic('claude-sonnet-4-20250514'),
+      system: "You are a coding assistant with access to tools that lives in the user's CLI. Perform their actions as succinctly as possible.",
+      prompt: 'Tell me what this project does.',
       tools: tools,
       stopWhen: stepCountIs(15),
       onStepFinish({ text, toolCalls, toolResults, finishReason, usage }) {
