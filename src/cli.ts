@@ -139,7 +139,7 @@ async function main() {
     // - [x] Let this bitch list files and read files.
     // - [x] Let it do code search with rg.
     // - [x] Loop it with ModelMessages.
-    // - [ ] Use anthropic to let it modify a file.
+    // - [ ] Use Anthropic to let it modify a file.
     // - [ ] Let it use bash with approval (xterm headless?).
     // - [ ] Wire it up to Anthropic search.
 
