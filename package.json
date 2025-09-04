@@ -13,7 +13,8 @@
     "@merit-systems/echo-typescript-sdk": "^1.0.8",
     "ai": "^5.0.30",
     "enquirer": "^2.4.1",
-    "open": "^10.2.0"
+    "open": "^10.2.0",
+    "zod": "^4.1.5"
   },
   "scripts": {
     "dev": "bun src/cli.ts"

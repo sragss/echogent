@@ -1,11 +1,8 @@
 import { EchoClient, createEchoOpenAI } from '@merit-systems/echo-typescript-sdk';
-import { generateText } from 'ai';
-import enquirer from 'enquirer';
+import { generateText, readUIMessageStream, stepCountIs, streamText, tool, type Tool } from 'ai';
 import open from 'open';
-import os from 'os';
-import path from 'path';
-import fs from 'fs/promises';
 import { getOrCreateApiKey } from './apiKey';
+import { z } from 'zod';
 
 const APP_ID = 'd4db70fb-4df9-4161-a89b-9ec53125088b';
 
@@ -36,14 +33,53 @@ async function main() {
       await open(payment.paymentLink.url);
     }
 
-    // Generate text with automatic billing
-    const { text } = await generateText({
+
+    // TODO(sragss): 
+    // 1. Let this bitch list files and read files.
+    // 2. Use anthropic to let it modify a file.
+    // 3. Let it use bash with approval.
+    // 4. Let it do code search with rg.
+
+
+    const tools = {
+        weather: tool({
+          description: 'Get the weather in a location',
+          inputSchema: z.object({
+            location: z.string().describe('The location to get the weather for')
+          }),
+          execute: async ({ location }) => ({
+            location,
+            temperature: 72 + Math.floor(Math.random() * 21) - 10
+          })
+        })
+      };
+
+
+
+    await generateText({
       model: await openai('gpt-4o'),
-      prompt: 'Explain quantum computing in simple terms',
+      prompt: 'Explain quantum computing in simple terms and the weather in LA then tell me a story about it.',
+      tools: tools,
+      stopWhen: stepCountIs(5),
+      onStepFinish({ text, toolCalls, toolResults, finishReason, usage }) {
+
+        if (text !== '') {
+          console.log("Assistant: ", text);
+        }
+
+        for (const toolResult of toolResults) {
+          if (toolResult.type == 'tool-result') { // unsure if necessary
+            console.log(`${toolResult.toolName}(${JSON.stringify(toolResult.input)}) -> ${JSON.stringify(toolResult.output)}`);
+          }
+        }
+
+      }
     });
 
-    console.log('\nAI Response:');
-    console.log(text);
+
+
+
+
 
   } catch (error) {
     console.error('Error:', error);
