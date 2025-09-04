@@ -2,6 +2,7 @@ import { EchoClient, createEchoAnthropic } from '@merit-systems/echo-typescript-
 import { generateText, readUIMessageStream, stepCountIs, streamText, tool, type Tool, type ModelMessage } from 'ai';
 import open from 'open';
 import { getOrCreateApiKey } from './apiKey';
+import { BANNER } from './banner';
 import { z } from 'zod';
 
 
@@ -110,6 +111,8 @@ const tools = {
 
 async function main() {
   try {
+    console.log(BANNER);
+    
     const apiKey = await getOrCreateApiKey(APP_ID);
 
     // Create Echo client for balance/payments
