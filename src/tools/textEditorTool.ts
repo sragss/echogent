@@ -36,6 +36,9 @@ export const textEditorTool = anthropic.tools.textEditor_20250429({
           
           if (view_range && view_range.length === 2) {
             const [start, end] = view_range;
+            if (start == null || end == null) {
+              return `Error: view_range must provide start and end numbers.`;
+            }
             const selectedLines = lines.slice(Math.max(0, start - 1), Math.min(lines.length, end));
             return selectedLines.map((line, i) => `${start + i}: ${line}`).join('\n');
           }
